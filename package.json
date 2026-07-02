@@ -1,5 +1,8 @@
 {
-  "name": "release-kit",
+  "name": "@jhotadhari/release-kit",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.5",
   "description": "Generic release pipeline for libraries and apps — bumps versions, manages changelogs, publishes to npm and GitHub",
   "bin": "./bin/release-kit.js",
