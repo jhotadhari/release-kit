@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `--no-publish` CLI flag to skip publish steps at runtime (`--no-publish`, `--no-publish github`, `--no-publish npm`)
 - Resume support: if the pipeline fails, re-running the same command picks up where it left off via `.release-kit-state.json`
+- Pipeline steps now use string keys (`'bump'`, `'changelog'`, …) instead of fragile numeric identifiers, with legacy migration for existing state files
+
+### Fixed
+
+- `checkCleanWorkingTree` now guarded on resume: dirty bump/changelog files after a partial run no longer block recovery
+- Branch-mismatch detection preserves state after `merge_main` — the branch change to `main` is expected and no longer clears the resume checkpoint
+- `--no-publish` flags are now restored from saved state on resume (was saved but never read back, unlike `--no-test`/`--no-lint`)
+- `save()` preserves `noTest`/`noLint` from existing state so flags survive across multiple crash-resume cycles
+- State file writes are now atomic (temp file + rename) to prevent truncated state on crash
+- `isCompleted` has a runtime guard for unknown step keys
+- Legacy numeric step migration map is derived from `STEP_ORDER` so it stays in sync automatically
+- `loadState` validates `version`/`releaseBranch` types and distinguishes JSON parse errors from I/O errors
 
 ## [0.0.3] - 2026-07-02
 
