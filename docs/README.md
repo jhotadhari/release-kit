@@ -5,13 +5,13 @@ Generic release pipeline for libraries and apps — bumps versions, manages chan
 ## Quick start
 
 ```sh
-yarn add --dev release-kit
+yarn add --dev @jhotadhari/release-kit
 ```
 
 Create a `release.config.ts` in your project root:
 
 ```ts
-import { defineConfig } from 'release-kit';
+import { defineConfig } from '@jhotadhari/release-kit';
 
 export default defineConfig({
     repo: 'https://github.com/your-org/your-repo',
