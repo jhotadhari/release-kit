@@ -16,7 +16,8 @@
     "scripts": {
         "typecheck": "tsc",
         "lint": "eslint \"**/*.{js,ts,tsx}\"",
-        "format": "prettier . --write"
+        "format": "prettier . --write",
+        "test": "tsx --test tests/**/*.test.ts"
     },
     "dependencies": {
         "@octokit/rest": "^22.0.1",
