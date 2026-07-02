@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `--no-publish` CLI flag to skip publish steps at runtime (`--no-publish`, `--no-publish github`, `--no-publish npm`)
+- Resume support: if the pipeline fails, re-running the same command picks up where it left off via `.release-kit-state.json`
+
 ## [0.0.3] - 2026-07-02
 
 ### Fixed

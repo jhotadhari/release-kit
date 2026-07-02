@@ -3,3 +3,4 @@ lib/
 .yarn/install-state.gz
 !.yarn/releases/
 !.yarn/plugins/
+.release-kit-state.json
