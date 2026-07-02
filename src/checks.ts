@@ -42,8 +42,8 @@ export async function checkCleanWorkingTree(git: SimpleGit): Promise<void> {
 
 export function checkChangelogHasUnreleased(changelogPath: string): void {
 	const content = readFileSync(changelogPath, 'utf-8');
-	if (!/## \[?Unreleased\]?/.test(content)) {
-		fatalError('CHANGELOG.md should have a `[Unreleased]` section');
+	if (!/## \[?Unreleased\]?/i.test(content)) {
+		fatalError('CHANGELOG.md should have an `[Unreleased]` or `Unreleased` section');
 	}
 }
 
