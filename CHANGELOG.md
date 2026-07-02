@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Renamed npm package from `release-kit` to `@jhotadhari/release-kit` to resolve name conflict with `releasekit`. The binary name stays `release-kit`, so `npx release-kit` still works.
+
 ## [0.0.5] - 2026-07-02
 
 ### Added
