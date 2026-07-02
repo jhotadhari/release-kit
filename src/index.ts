@@ -54,35 +54,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			?.path ?? config.bumpFiles![0]!.path;
 	const changelogPath = config.changelog!.path!;
 
-	// 2. Pre-flight validations
-	await validateVersionIsHigher(version, pkgPath, git);
-	await checkCleanWorkingTree(git);
-	if (config.changelog) {
-		checkChangelogHasUnreleased(changelogPath);
-	}
-	await checkBranchIsRelease(git, config.branches!.releasePrefix!);
-	if (config.publish?.github !== false && !noPublish.includes('github')) {
-		checkGitHubToken();
-	}
-	if (config.publish?.npm && !noPublish.includes('npm')) {
-		checkNpmAuth();
-	}
-	runPreflights(config, cwd, { test: args.test, lint: args.lint });
-
-	// 3. Dry-run: stop here, before any mutations
-	if (dryRun) {
-		console.log(
-			pc.green(
-				'All pre-flight checks passed. Ready to publish v' +
-					version +
-					'.'
-			)
-		);
-		console.log(pc.yellow('Run again without --dry-run to publish.'));
-		return;
-	}
-
-	// Check for resume state
+	// Check for resume state before pre-flight (some checks depend on it)
 	const releaseBranch = await getCurrentBranch(git);
 	const existingState = loadState(cwd);
 
@@ -113,6 +85,53 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	const state = loadState(cwd);
 	const completedStep = state?.completedStep ?? 3;
 	const stateBranch = state?.releaseBranch ?? releaseBranch;
+
+	// 2. Pre-flight validations (some skipped on resume)
+	if (completedStep < 4) {
+		await validateVersionIsHigher(version, pkgPath, git);
+	} else {
+		console.log(pc.yellow('Skipping version check (already bumped)'));
+	}
+	await checkCleanWorkingTree(git);
+	if (config.changelog && completedStep < 5) {
+		checkChangelogHasUnreleased(changelogPath);
+	} else if (config.changelog) {
+		console.log(
+			pc.yellow('Skipping [Unreleased] check (already released)')
+		);
+	}
+	await checkBranchIsRelease(git, config.branches!.releasePrefix!);
+	if (
+		config.publish?.github !== false &&
+		!noPublish.includes('github') &&
+		completedStep < 8
+	) {
+		checkGitHubToken();
+	}
+	if (
+		config.publish?.npm &&
+		!noPublish.includes('npm') &&
+		completedStep < 9
+	) {
+		checkNpmAuth();
+	}
+	// Re-apply saved flags on resume
+	const preflightTest = state?.noTest ? false : args.test;
+	const preflightLint = state?.noLint ? false : args.lint;
+	runPreflights(config, cwd, { test: preflightTest, lint: preflightLint });
+
+	// 3. Dry-run: stop here, before any mutations
+	if (dryRun) {
+		console.log(
+			pc.green(
+				'All pre-flight checks passed. Ready to publish v' +
+					version +
+					'.'
+			)
+		);
+		console.log(pc.yellow('Run again without --dry-run to publish.'));
+		return;
+	}
 
 	const save = (step: number) =>
 		saveState(cwd, {
@@ -154,7 +173,10 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 
 	// 8. GitHub release
 	if (completedStep < 8) {
-		if (config.publish?.github !== false && !noPublish.includes('github')) {
+		if (
+			config.publish?.github !== false &&
+			!noPublish.includes('github')
+		) {
 			await createGitHubRelease(version, config.repo, changelogPath);
 		} else {
 			console.log(pc.yellow('Skipping GitHub release'));
