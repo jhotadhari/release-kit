@@ -101,9 +101,11 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	if (npmConfig) {
 		const buildCommand =
 			typeof npmConfig === 'object'
-				? (npmConfig.buildCommand ?? 'yarn prepare')
-				: 'yarn prepare';
-		runBuild(buildCommand, cwd);
+				? (npmConfig.buildCommand ?? false)
+				: false;
+		if (buildCommand) {
+			runBuild(buildCommand, cwd);
+		}
 		npmPublish(version, false, cwd);
 	}
 

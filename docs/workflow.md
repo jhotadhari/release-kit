@@ -57,7 +57,7 @@ npx release-kit 1.2.0
 | Merge | No-fast-forward merge into `main` |
 | Tag | Creates and pushes `v1.2.0` tag |
 | GitHub | Creates a GitHub Release with the changelog section as body |
-| npm | Runs build command, then `npm publish` (with dist-tag for prereleases) |
+| npm | Runs build command (if configured), then `npm publish` (with dist-tag for prereleases) |
 | Merge back | No-fast-forward merge into `development` |
 | Changelog | Re-adds a blank `[Unreleased]` section, commits and pushes |
 
