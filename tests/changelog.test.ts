@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync, unlinkSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -13,6 +13,13 @@ import {
 
 const repoUrl = 'https://github.com/owner/repo';
 let tmpDir: string;
+
+// Suppress console.log noise from changelog functions during tests
+const originalLog = console.log;
+console.log = () => {};
+process.on('exit', () => {
+	console.log = originalLog;
+});
 
 function createChangelog(content: string, dir?: string): string {
 	const base = dir ?? tmpDir;
