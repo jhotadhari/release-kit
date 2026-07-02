@@ -25,7 +25,13 @@ import {
 } from './git';
 import { createGitHubRelease } from './github';
 import { runBuild, npmPublish } from './npm';
-import { loadState, saveState, clearState } from './state';
+import {
+	loadState,
+	saveState,
+	clearState,
+	isCompleted,
+	type StepKey,
+} from './state';
 import type { ReleaseConfig } from './types';
 
 export const release = async (userConfig: ReleaseConfig): Promise<void> => {
@@ -76,24 +82,27 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		} else {
 			console.log(
 				pc.blue(
-					`Resuming from step ${existingState.completedStep + 1} (last completed: step ${existingState.completedStep})`
+					`Resuming from step "${existingState.completedStep}"`
 				)
 			);
 		}
 	}
 
 	const state = loadState(cwd);
-	const completedStep = state?.completedStep ?? 3;
+	const completedStep = state?.completedStep ?? null;
 	const stateBranch = state?.releaseBranch ?? releaseBranch;
 
+	const done = (step: StepKey) =>
+		completedStep ? isCompleted(completedStep, step) : false;
+
 	// 2. Pre-flight validations (some skipped on resume)
-	if (completedStep < 4) {
+	if (!done('bump')) {
 		await validateVersionIsHigher(version, pkgPath, git);
 	} else {
 		console.log(pc.yellow('Skipping version check (already bumped)'));
 	}
 	await checkCleanWorkingTree(git);
-	if (config.changelog && completedStep < 5) {
+	if (config.changelog && !done('changelog')) {
 		checkChangelogHasUnreleased(changelogPath);
 	} else if (config.changelog) {
 		console.log(
@@ -104,14 +113,14 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	if (
 		config.publish?.github !== false &&
 		!noPublish.includes('github') &&
-		completedStep < 8
+		!done('github_release')
 	) {
 		checkGitHubToken();
 	}
 	if (
 		config.publish?.npm &&
 		!noPublish.includes('npm') &&
-		completedStep < 9
+		!done('npm_publish')
 	) {
 		checkNpmAuth();
 	}
@@ -133,7 +142,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		return;
 	}
 
-	const save = (step: number) =>
+	const save = (step: StepKey) =>
 		saveState(cwd, {
 			version,
 			completedStep: step,
@@ -144,35 +153,35 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		});
 
 	// 4. Bump version in all configured files
-	if (completedStep < 4) {
+	if (!done('bump')) {
 		const currentVersion = getCurrentVersion(pkgPath);
 		bumpAllFiles(config, currentVersion, version);
-		save(4);
+		save('bump');
 	}
 
 	// 5. Release changelog
-	if (completedStep < 5) {
+	if (!done('changelog')) {
 		if (config.changelog !== undefined) {
 			releaseChangelog(version, changelogPath, config.repo);
 		}
-		save(5);
+		save('changelog');
 	}
 
 	// 6. Stage & commit on release branch
-	if (completedStep < 6) {
+	if (!done('commit')) {
 		await gitStageAllAndCommit(git, `chore: release v${version}`);
-		save(6);
+		save('commit');
 	}
 
 	// 7. Merge to main, tag, push
-	if (completedStep < 7) {
+	if (!done('merge_main')) {
 		await gitMergeToMain(git, stateBranch, config.branches!.main!);
 		await gitTagAndPush(git, version);
-		save(7);
+		save('merge_main');
 	}
 
 	// 8. GitHub release
-	if (completedStep < 8) {
+	if (!done('github_release')) {
 		if (
 			config.publish?.github !== false &&
 			!noPublish.includes('github')
@@ -181,11 +190,11 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		} else {
 			console.log(pc.yellow('Skipping GitHub release'));
 		}
-		save(8);
+		save('github_release');
 	}
 
 	// 9. Build and npm publish
-	if (completedStep < 9) {
+	if (!done('npm_publish')) {
 		const npmConfig = config.publish?.npm;
 		if (npmConfig && !noPublish.includes('npm')) {
 			const buildCommand =
@@ -199,21 +208,21 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		} else if (noPublish.includes('npm')) {
 			console.log(pc.yellow('Skipping npm publish'));
 		}
-		save(9);
+		save('npm_publish');
 	}
 
 	// 10. Merge to development
-	if (completedStep < 10) {
+	if (!done('merge_development')) {
 		await gitMergeToDevelopment(
 			git,
 			stateBranch,
 			config.branches!.development!
 		);
-		save(10);
+		save('merge_development');
 	}
 
 	// 11. Re-add [Unreleased] section, commit, push
-	if (completedStep < 11) {
+	if (!done('unreleased')) {
 		if (config.changelog !== undefined) {
 			addUnreleasedSection(changelogPath, config.repo);
 			await gitStageChangelogAndCommit(
@@ -223,12 +232,10 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			);
 			await gitPush(git);
 		}
-		clearState(cwd);
-	} else {
-		// Already completed step 11 — cleanup stale state file
-		clearState(cwd);
+		save('unreleased');
 	}
 
+	clearState(cwd);
 	console.log(pc.green(`Done — v${version} published successfully.`));
 };
 
