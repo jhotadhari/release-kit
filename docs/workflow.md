@@ -88,3 +88,22 @@ npx release-kit 1.2.0 --no-test   # skip tests
 npx release-kit 1.2.0 --no-lint   # skip lint
 npx release-kit 1.2.0 --dry-run   # validate only, no mutations
 ```
+
+## Skipping publish steps
+
+Skip publishing without editing `release.config.ts`:
+
+```sh
+npx release-kit 1.2.0 --no-publish          # skip all publish steps
+npx release-kit 1.2.0 --no-publish github   # skip GitHub release only
+npx release-kit 1.2.0 --no-publish npm      # skip npm publish only
+```
+
+## Resuming after a failure
+
+If the pipeline fails partway through (e.g., network error, missing token), fix the
+issue and re-run the same command. release-kit saves progress to
+`.release-kit-state.json` after each step and resumes from where it left off.
+
+The state file is automatically removed on success. Add `.release-kit-state.json`
+to your project's `.gitignore`.

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.4] - 2026-07-02
+
+### Added
+
+- `--no-publish` CLI flag to skip publish steps at runtime (`--no-publish`, `--no-publish github`, `--no-publish npm`)
+- Resume support: if the pipeline fails, re-running the same command picks up where it left off via `.release-kit-state.json`
+
 ## [0.0.3] - 2026-07-02
 
 ### Fixed
@@ -26,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive documentation
 - Unit test suite
 
+[0.0.4]: https://github.com/jhotadhari/release-kit/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/jhotadhari/release-kit/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/jhotadhari/release-kit/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/jhotadhari/release-kit/releases/tag/v0.0.1

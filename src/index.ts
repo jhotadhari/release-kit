@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+import type { ParsedArgs } from './cli';
 import { parseArgs } from './cli';
 import { resolveConfig } from './config';
 import {
@@ -24,6 +25,7 @@ import {
 } from './git';
 import { createGitHubRelease } from './github';
 import { runBuild, npmPublish } from './npm';
+import { loadState, saveState, clearState } from './state';
 import type { ReleaseConfig } from './types';
 
 export const release = async (userConfig: ReleaseConfig): Promise<void> => {
@@ -31,10 +33,16 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	const config = resolveConfig(cwd, userConfig);
 
 	// 1. Parse version and flags from CLI args
-	const { version, dryRun, test, lint } = parseArgs();
+	const args: ParsedArgs = parseArgs();
+	const { version, dryRun, noPublish } = args;
 
 	if (dryRun) {
 		console.log(pc.yellow('--dry-run: no mutations will be made'));
+	}
+	if (noPublish.length > 0) {
+		console.log(
+			pc.yellow(`--no-publish: skipping ${noPublish.join(', ')}`)
+		);
 	}
 	console.log(
 		pc.blue(`Publishing v${version}${dryRun ? ' (dry-run)' : ''}…`)
@@ -53,13 +61,13 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		checkChangelogHasUnreleased(changelogPath);
 	}
 	await checkBranchIsRelease(git, config.branches!.releasePrefix!);
-	if (config.publish?.github !== false) {
+	if (config.publish?.github !== false && !noPublish.includes('github')) {
 		checkGitHubToken();
 	}
-	if (config.publish?.npm) {
+	if (config.publish?.npm && !noPublish.includes('npm')) {
 		checkNpmAuth();
 	}
-	runPreflights(config, cwd, { test, lint });
+	runPreflights(config, cwd, { test: args.test, lint: args.lint });
 
 	// 3. Dry-run: stop here, before any mutations
 	if (dryRun) {
@@ -74,57 +82,129 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		return;
 	}
 
+	// Check for resume state
+	const releaseBranch = await getCurrentBranch(git);
+	const existingState = loadState(cwd);
+
+	if (existingState) {
+		if (existingState.version !== version) {
+			console.warn(
+				pc.yellow(
+					`State file version (${existingState.version}) does not match ${version} — starting fresh.`
+				)
+			);
+			clearState(cwd);
+		} else if (existingState.releaseBranch !== releaseBranch) {
+			console.warn(
+				pc.yellow(
+					`State file branch (${existingState.releaseBranch}) does not match ${releaseBranch} — starting fresh.`
+				)
+			);
+			clearState(cwd);
+		} else {
+			console.log(
+				pc.blue(
+					`Resuming from step ${existingState.completedStep + 1} (last completed: step ${existingState.completedStep})`
+				)
+			);
+		}
+	}
+
+	const state = loadState(cwd);
+	const completedStep = state?.completedStep ?? 3;
+	const stateBranch = state?.releaseBranch ?? releaseBranch;
+
+	const save = (step: number) =>
+		saveState(cwd, {
+			version,
+			completedStep: step,
+			releaseBranch: stateBranch,
+			noPublish: noPublish.length > 0 ? noPublish : undefined,
+			noTest: args.test ? undefined : true,
+			noLint: args.lint ? undefined : true,
+		});
+
 	// 4. Bump version in all configured files
-	const currentVersion = getCurrentVersion(pkgPath);
-	bumpAllFiles(config, currentVersion, version);
+	if (completedStep < 4) {
+		const currentVersion = getCurrentVersion(pkgPath);
+		bumpAllFiles(config, currentVersion, version);
+		save(4);
+	}
 
 	// 5. Release changelog
-	if (config.changelog !== undefined) {
-		releaseChangelog(version, changelogPath, config.repo);
+	if (completedStep < 5) {
+		if (config.changelog !== undefined) {
+			releaseChangelog(version, changelogPath, config.repo);
+		}
+		save(5);
 	}
 
 	// 6. Stage & commit on release branch
-	await gitStageAllAndCommit(git, `chore: release v${version}`);
+	if (completedStep < 6) {
+		await gitStageAllAndCommit(git, `chore: release v${version}`);
+		save(6);
+	}
 
 	// 7. Merge to main, tag, push
-	const releaseBranch = await getCurrentBranch(git);
-	await gitMergeToMain(git, releaseBranch, config.branches!.main!);
-	await gitTagAndPush(git, version);
+	if (completedStep < 7) {
+		await gitMergeToMain(git, stateBranch, config.branches!.main!);
+		await gitTagAndPush(git, version);
+		save(7);
+	}
 
 	// 8. GitHub release
-	if (config.publish?.github !== false) {
-		await createGitHubRelease(version, config.repo, changelogPath);
+	if (completedStep < 8) {
+		if (config.publish?.github !== false && !noPublish.includes('github')) {
+			await createGitHubRelease(version, config.repo, changelogPath);
+		} else {
+			console.log(pc.yellow('Skipping GitHub release'));
+		}
+		save(8);
 	}
 
 	// 9. Build and npm publish
-	const npmConfig = config.publish?.npm;
-	if (npmConfig) {
-		const buildCommand =
-			typeof npmConfig === 'object'
-				? (npmConfig.buildCommand ?? false)
-				: false;
-		if (buildCommand) {
-			runBuild(buildCommand, cwd);
+	if (completedStep < 9) {
+		const npmConfig = config.publish?.npm;
+		if (npmConfig && !noPublish.includes('npm')) {
+			const buildCommand =
+				typeof npmConfig === 'object'
+					? (npmConfig.buildCommand ?? false)
+					: false;
+			if (buildCommand) {
+				runBuild(buildCommand, cwd);
+			}
+			npmPublish(version, false, cwd);
+		} else if (noPublish.includes('npm')) {
+			console.log(pc.yellow('Skipping npm publish'));
 		}
-		npmPublish(version, false, cwd);
+		save(9);
 	}
 
 	// 10. Merge to development
-	await gitMergeToDevelopment(
-		git,
-		releaseBranch,
-		config.branches!.development!
-	);
+	if (completedStep < 10) {
+		await gitMergeToDevelopment(
+			git,
+			stateBranch,
+			config.branches!.development!
+		);
+		save(10);
+	}
 
 	// 11. Re-add [Unreleased] section, commit, push
-	if (config.changelog !== undefined) {
-		addUnreleasedSection(changelogPath, config.repo);
-		await gitStageChangelogAndCommit(
-			git,
-			changelogPath,
-			'chore: add [Unreleased] section to CHANGELOG.md'
-		);
-		await gitPush(git);
+	if (completedStep < 11) {
+		if (config.changelog !== undefined) {
+			addUnreleasedSection(changelogPath, config.repo);
+			await gitStageChangelogAndCommit(
+				git,
+				changelogPath,
+				'chore: add [Unreleased] section to CHANGELOG.md'
+			);
+			await gitPush(git);
+		}
+		clearState(cwd);
+	} else {
+		// Already completed step 11 — cleanup stale state file
+		clearState(cwd);
 	}
 
 	console.log(pc.green(`Done — v${version} published successfully.`));
