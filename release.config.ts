@@ -9,7 +9,7 @@ export default defineConfig({
 		path: 'CHANGELOG.md',
 	},
 	publish: {
-		npm: true,
+		npm: { buildCommand: 'true' },
 		github: true,
 	},
 });
