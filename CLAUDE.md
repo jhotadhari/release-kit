@@ -29,7 +29,8 @@ There is no build step — the package runs directly via `tsx`. The `bin/release
 | `src/changelog.ts` | Wraps `keep-a-changelog` — parses, releases `[Unreleased]` → dated version, re-adds a blank `[Unreleased]`, and extracts a release's body for GitHub |
 | `src/git.ts` | All git mutations via `simple-git`: stage + commit, `--no-ff` merges to main and development, tag + push |
 | `src/github.ts` | Creates or updates a GitHub Release via `@octokit/rest`. Parses owner/repo from the `repo` URL. Requires `GITHUB_TOKEN` env var |
-| `src/npm.ts` | Runs the build command (`yarn prepare` by default) then `npm publish` with an auto-detected dist-tag for prereleases |
+| `src/npm.ts` | Runs the build command (default `false` = skip) then `npm publish` with an auto-detected dist-tag for prereleases |
+| `src/state.ts` | Pipeline state persistence: `loadState`, `saveState`, `clearState`, `isCompleted`, `nextStep`, `STEP_ORDER`. Supports resume-on-failure via `.release-kit-state.json`. |
 
 **Config shape** (`src/types.ts`): Consumers define a `ReleaseConfig` via `defineConfig()` re-exported from the package. Key knobs: `bumpFiles` (JSON or Gradle), `versionCode` (multipliers for Android versionCode computation), `branches` (main/development/release prefix), `publish` (npm and/or GitHub), `preflight` (customizable typecheck/lint/test commands).
 
