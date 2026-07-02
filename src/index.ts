@@ -6,6 +6,8 @@ import {
 	checkCleanWorkingTree,
 	checkChangelogHasUnreleased,
 	checkBranchIsRelease,
+	checkGitHubToken,
+	checkNpmAuth,
 	runPreflights,
 } from './checks';
 import { getCurrentVersion, bumpAllFiles } from './version';
@@ -51,6 +53,12 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		checkChangelogHasUnreleased(changelogPath);
 	}
 	await checkBranchIsRelease(git, config.branches!.releasePrefix!);
+	if (config.publish?.github !== false) {
+		checkGitHubToken();
+	}
+	if (config.publish?.npm) {
+		checkNpmAuth();
+	}
 	runPreflights(config, cwd, { test, lint });
 
 	// 3. Dry-run: stop here, before any mutations

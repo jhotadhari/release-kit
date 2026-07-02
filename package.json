@@ -1,6 +1,6 @@
 {
   "name": "release-kit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Generic release pipeline for libraries and apps — bumps versions, manages changelogs, publishes to npm and GitHub",
   "bin": "./bin/release-kit.js",
   "main": "./src/index.ts",
