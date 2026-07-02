@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `GITHUB_TOKEN` is now checked in pre-flight (step 2), before any mutations — no more mid-pipeline failures
 - npm authentication is now checked in pre-flight (step 2), before any mutations
-- Fixed npm publish build command: this package has no build step, so `release.config.ts` now specifies `buildCommand: 'true'` instead of defaulting to `yarn prepare`
+- `buildCommand` now defaults to `false` (skip build); packages that need a build step set `buildCommand: 'yarn prepare'` explicitly
 
 ## [0.0.2] - 2026-07-02
 
