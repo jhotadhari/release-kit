@@ -14,6 +14,13 @@ import {
 const repoUrl = 'https://github.com/owner/repo';
 let tmpDir: string;
 
+// Suppress console.log noise from changelog functions during tests
+const originalLog = console.log;
+console.log = () => {};
+process.on('exit', () => {
+	console.log = originalLog;
+});
+
 function createChangelog(content: string, dir?: string): string {
 	const base = dir ?? tmpDir;
 	const path = join(base, 'CHANGELOG.md');

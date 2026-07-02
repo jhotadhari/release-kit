@@ -8,6 +8,13 @@ import { checkChangelogHasUnreleased } from '../src/checks';
 let tmpDir: string;
 const originalExit = process.exit;
 
+// Suppress console output from fatalError during tests
+const originalError = console.error;
+console.error = () => {};
+process.on('exit', () => {
+	console.error = originalError;
+});
+
 function createFile(name: string, content: string): string {
 	const path = join(tmpDir, name);
 	writeFileSync(path, content, 'utf-8');
@@ -47,6 +54,16 @@ describe('checkChangelogHasUnreleased', () => {
 		);
 
 		// Should not throw — regex matches both [Unreleased] and Unreleased
+		checkChangelogHasUnreleased(path);
+	});
+
+	it('passes when Unreleased uses different casing', () => {
+		const path = createFile(
+			'CHANGELOG.md',
+			'# Changelog\n\n## [UNRELEASED]\n### Added\n- Stuff\n',
+		);
+
+		// Should not throw — regex is case-insensitive
 		checkChangelogHasUnreleased(path);
 	});
 
