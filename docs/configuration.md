@@ -18,7 +18,7 @@ interface ReleaseConfig {
     };
     publish?: {
         npm?: boolean | {                     // default: false
-            buildCommand?: string;            // default: 'yarn prepare'
+            buildCommand?: string | false;    // default: false (skip build)
         };
         github?: boolean;                     // default: true
     };
