@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Edit Tool - Whitespace Workaround
+
+For `.ts`/`.tsx`/`.js`/`.jsx` files: match `old_string` in Edit calls **without** leading
+whitespace (to avoid the tab-vs-space ambiguity described in
+[claude-code/#26996](https://github.com/anthropics/claude-code/issues/26996)). Accumulate all
+touched files, then run one `npx prettier --write <file1> <file2> ...` at the end to fix
+indentation. Only include leading whitespace when needed to disambiguate non-unique matches.
+
+For `.java` files, `yarn format` doesn't cover them — fall back to `sed` with explicit `\t`
+escapes after a single failed Edit attempt.
+
 ## Commands
 
 ```sh

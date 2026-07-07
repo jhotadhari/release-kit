@@ -113,4 +113,35 @@ describe('resolveConfig', () => {
 
 		assert.equal(result.publish!.npm, true);
 	});
+
+	it('handles github publish config as object with attachment', () => {
+		const result = resolveConfig(cwd, {
+			repo: 'owner/repo',
+			publish: {
+				github: { attachment: true },
+			},
+		});
+
+		assert.deepEqual(result.publish!.github, { attachment: true });
+	});
+
+	it('handles github publish config as boolean false', () => {
+		const result = resolveConfig(cwd, {
+			repo: 'owner/repo',
+			publish: {
+				github: false,
+			},
+		});
+
+		assert.equal(result.publish!.github, false);
+	});
+
+	it('handles github publish config as boolean true', () => {
+		const result = resolveConfig(cwd, {
+			repo: 'owner/repo',
+			publish: { github: true },
+		});
+
+		assert.equal(result.publish!.github, true);
+	});
 });
