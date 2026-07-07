@@ -65,7 +65,7 @@ describe('loadState', () => {
 			join(tmpDir, '.release-kit-state.json'),
 			JSON.stringify({
 				version: '0.0.4',
-				completedStep: 8,
+				completedStep: 9,
 				releaseBranch: 'release/0.0.4',
 			}),
 			'utf-8'
@@ -133,10 +133,11 @@ describe('nextStep', () => {
 });
 
 describe('STEP_ORDER', () => {
-	it('has 8 steps in correct order', () => {
+	it('has 9 steps in correct order', () => {
 		assert.deepEqual(STEP_ORDER, [
 			'bump',
 			'changelog',
+			'scaffold',
 			'commit',
 			'merge_main',
 			'github_release',

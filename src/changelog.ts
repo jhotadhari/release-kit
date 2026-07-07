@@ -76,3 +76,22 @@ export function extractReleaseBody(
 
 	return parts.join('\n').trim();
 }
+
+export function extractStoreChangelog(
+	version: string,
+	changelogPath: string,
+	maxChars: number = 500
+): string {
+	const body = extractReleaseBody(version, changelogPath);
+
+	if (body.length <= maxChars) return body;
+
+	// Truncate at the last newline before maxChars, then add ellipsis
+	const truncated = body.substring(0, maxChars - 3);
+	const lastNewline = truncated.lastIndexOf('\n');
+	const cutPoint =
+		lastNewline > maxChars / 2 ? lastNewline : truncated.lastIndexOf(' ');
+	const end = cutPoint > maxChars / 2 ? cutPoint : maxChars - 3;
+
+	return body.substring(0, end).trimEnd() + '…';
+}

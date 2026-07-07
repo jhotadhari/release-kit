@@ -4,6 +4,11 @@ export interface BumpFile {
 	key?: string;
 }
 
+export interface StoreMetadataConfig {
+	path?: string;
+	locales?: string[];
+}
+
 export interface VersionCodeConfig {
 	multiplier: {
 		major: number;
@@ -26,9 +31,10 @@ export interface ReleaseConfig {
 	};
 	publish?: {
 		npm?: boolean | { buildCommand?: string | false };
-		github?: boolean;
+		github?: boolean | { attachment?: boolean };
 	};
 	versionCode?: VersionCodeConfig;
+	storeMetadata?: StoreMetadataConfig;
 	preflight?: {
 		typecheck?: string | false;
 		lint?: string | false;

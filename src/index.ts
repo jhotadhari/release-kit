@@ -14,6 +14,7 @@ import {
 } from './checks';
 import { getCurrentVersion, bumpAllFiles } from './version';
 import { releaseChangelog, addUnreleasedSection } from './changelog';
+import { scaffoldStoreMetadata } from './store';
 import {
 	createGit,
 	getCurrentBranch,
@@ -109,9 +110,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			}
 		} else {
 			console.log(
-				pc.blue(
-					`Resuming from step "${existingState.completedStep}"`
-				)
+				pc.blue(`Resuming from step "${existingState.completedStep}"`)
 			);
 		}
 	}
@@ -145,9 +144,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	if (!done('commit')) {
 		await checkCleanWorkingTree(git);
 	} else {
-		console.log(
-			pc.yellow('Skipping clean tree check (already committed)')
-		);
+		console.log(pc.yellow('Skipping clean tree check (already committed)'));
 	}
 	if (config.changelog && !done('changelog')) {
 		checkChangelogHasUnreleased(changelogPath);
@@ -189,9 +186,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			completedStep: step,
 			releaseBranch: stateBranch,
 			noPublish:
-				effectiveNoPublish.length > 0
-					? effectiveNoPublish
-					: undefined,
+				effectiveNoPublish.length > 0 ? effectiveNoPublish : undefined,
 			// Inverse semantics: true means "was skipped" (--no-test / --no-lint)
 			noTest: state?.noTest ?? (args.test ? undefined : true),
 			noLint: state?.noLint ?? (args.lint ? undefined : true),
@@ -212,6 +207,12 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 		save('changelog');
 	}
 
+	// 5b. Scaffold store metadata directory (Fastlane layout)
+	if (!done('scaffold')) {
+		scaffoldStoreMetadata(config, cwd);
+		save('scaffold');
+	}
+
 	// 6. Stage & commit on release branch
 	if (!done('commit')) {
 		await gitStageAllAndCommit(git, `chore: release v${version}`);
@@ -228,7 +229,15 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	// 8. GitHub release
 	if (!done('github_release')) {
 		if (shouldPublish('github')) {
-			await createGitHubRelease(version, config.repo, changelogPath);
+			const githubConfig = config.publish?.github;
+			const githubOptions =
+				typeof githubConfig === 'object' ? githubConfig : undefined;
+			await createGitHubRelease(
+				version,
+				config.repo,
+				changelogPath,
+				githubOptions
+			);
 		} else {
 			console.log(pc.yellow('Skipping GitHub release'));
 		}

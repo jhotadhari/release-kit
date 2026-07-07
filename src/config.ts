@@ -20,6 +20,10 @@ const DEFAULTS: Partial<ReleaseConfig> = {
 		lint: 'yarn lint',
 		test: 'yarn test',
 	},
+	storeMetadata: {
+		path: 'fastlane/metadata/android',
+		locales: ['en-US'],
+	},
 };
 
 export function resolveConfig(
@@ -42,6 +46,10 @@ export function resolveConfig(
 			...DEFAULTS.preflight,
 			...userConfig.preflight,
 		},
+		storeMetadata: {
+			...DEFAULTS.storeMetadata,
+			...userConfig.storeMetadata,
+		},
 	};
 
 	if (userConfig.versionCode) {
@@ -57,6 +65,12 @@ export function resolveConfig(
 			...bf,
 			path: path.resolve(cwd, bf.path),
 		}));
+	}
+	if (resolved.storeMetadata?.path) {
+		resolved.storeMetadata = {
+			...resolved.storeMetadata,
+			path: path.resolve(cwd, resolved.storeMetadata.path),
+		};
 	}
 
 	return resolved;

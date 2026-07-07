@@ -105,12 +105,79 @@ describe('resolveConfig', () => {
 		assert.deepEqual(result.publish!.npm, { buildCommand: 'npm run build' });
 	});
 
-	it('handles npm publish config as boolean', () => {
+	it('applies default storeMetadata config', () => {
+	const result = resolveConfig(cwd, {
+		repo: 'owner/repo',
+	});
+
+	assert.deepEqual(result.storeMetadata, {
+		path: '/fake/project/fastlane/metadata/android',
+		locales: ['en-US'],
+	});
+});
+
+it('merges user storeMetadata with defaults', () => {
+	const result = resolveConfig(cwd, {
+		repo: 'owner/repo',
+		storeMetadata: { locales: ['en-US', 'de-DE'] },
+	});
+
+	assert.equal(
+		result.storeMetadata!.path,
+		'/fake/project/fastlane/metadata/android'
+	);
+	assert.deepEqual(result.storeMetadata!.locales, ['en-US', 'de-DE']);
+});
+
+it('resolves storeMetadata path to absolute', () => {
+	const result = resolveConfig(cwd, {
+		repo: 'owner/repo',
+		storeMetadata: { path: 'custom/store/path' },
+	});
+
+	assert.equal(
+		result.storeMetadata!.path,
+		'/fake/project/custom/store/path'
+	);
+});
+
+it('handles npm publish config as boolean', () => {
 		const result = resolveConfig(cwd, {
 			repo: 'owner/repo',
 			publish: { npm: true },
 		});
 
 		assert.equal(result.publish!.npm, true);
+	});
+
+	it('handles github publish config as object with attachment', () => {
+		const result = resolveConfig(cwd, {
+			repo: 'owner/repo',
+			publish: {
+				github: { attachment: true },
+			},
+		});
+
+		assert.deepEqual(result.publish!.github, { attachment: true });
+	});
+
+	it('handles github publish config as boolean false', () => {
+		const result = resolveConfig(cwd, {
+			repo: 'owner/repo',
+			publish: {
+				github: false,
+			},
+		});
+
+		assert.equal(result.publish!.github, false);
+	});
+
+	it('handles github publish config as boolean true', () => {
+		const result = resolveConfig(cwd, {
+			repo: 'owner/repo',
+			publish: { github: true },
+		});
+
+		assert.equal(result.publish!.github, true);
 	});
 });

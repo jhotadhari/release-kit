@@ -9,6 +9,7 @@ import {
 	releaseChangelog,
 	addUnreleasedSection,
 	extractReleaseBody,
+	extractStoreChangelog,
 } from '../src/changelog';
 
 const repoUrl = 'https://github.com/owner/repo';
@@ -168,6 +169,69 @@ describe('extractReleaseBody', () => {
 
 		assert.ok(body.includes('### Changed'));
 		assert.ok(body.includes('Some change'));
+	});
+});
+
+describe('extractStoreChangelog', () => {
+	before(() => {
+		tmpDir = join(tmpdir(), `release-kit-test-${Date.now()}`);
+		mkdirSync(tmpDir);
+	});
+
+	after(() => {
+		rmSync(tmpDir, { recursive: true, force: true });
+	});
+
+	it('returns the full body when under maxChars', () => {
+		const path = createChangelog(
+			[
+				'# Changelog',
+				'',
+				'## [1.0.0] - 2024-01-15',
+				'### Added',
+				'- Feature A',
+				'',
+			].join('\n'),
+		);
+
+		const result = extractStoreChangelog('1.0.0', path);
+		assert.ok(result.includes('Feature A'));
+	});
+
+	it('truncates body that exceeds maxChars', () => {
+		const path = createChangelog(
+			[
+				'# Changelog',
+				'',
+				'## [1.0.0] - 2024-01-15',
+				'### Added',
+				'- A very long feature description that goes on and on',
+				'- Another very long feature description that also goes on',
+				'- Yet another very long feature description',
+				'- And one more very long feature description for good measure',
+				'',
+			].join('\n'),
+		);
+
+		const result = extractStoreChangelog('1.0.0', path, 100);
+		assert.ok(result.length <= 100, `got ${result.length}, expected <= 100`);
+		assert.ok(result.endsWith('…'), 'should end with ellipsis');
+	});
+
+	it('uses default maxChars of 500 when not specified', () => {
+		const path = createChangelog(
+			[
+				'# Changelog',
+				'',
+				'## [1.0.0] - 2024-01-15',
+				'### Added',
+				'- Short entry',
+				'',
+			].join('\n'),
+		);
+
+		const result = extractStoreChangelog('1.0.0', path);
+		assert.ok(result.length <= 500);
 	});
 });
 

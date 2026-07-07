@@ -69,7 +69,9 @@ export function checkNpmAuth(): void {
 export function checkChangelogHasUnreleased(changelogPath: string): void {
 	const content = readFileSync(changelogPath, 'utf-8');
 	if (!/## \[?Unreleased\]?/i.test(content)) {
-		fatalError('CHANGELOG.md should have an `[Unreleased]` or `Unreleased` section');
+		fatalError(
+			'CHANGELOG.md should have an `[Unreleased]` or `Unreleased` section'
+		);
 	}
 }
 

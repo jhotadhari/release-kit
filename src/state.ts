@@ -13,6 +13,7 @@ import pc from 'picocolors';
 export const STEP_ORDER = [
 	'bump',
 	'changelog',
+	'scaffold',
 	'commit',
 	'merge_main',
 	'github_release',
@@ -37,10 +38,7 @@ export interface PipelineState {
 const STATE_FILE = '.release-kit-state.json';
 
 /** Returns true if `step` has already been completed (index <= completedStep index). */
-export function isCompleted(
-	completedStep: StepKey,
-	step: StepKey
-): boolean {
+export function isCompleted(completedStep: StepKey, step: StepKey): boolean {
 	const completedIdx = STEP_ORDER.indexOf(completedStep);
 	const stepIdx = STEP_ORDER.indexOf(step);
 	// Unknown step key at runtime (e.g. from untyped JSON) — treat as not completed
@@ -70,11 +68,7 @@ export function loadState(cwd: string): PipelineState | null {
 		const state = JSON.parse(raw) as PipelineState;
 
 		// Basic validation
-		if (
-			!state.version ||
-			!state.completedStep ||
-			!state.releaseBranch
-		) {
+		if (!state.version || !state.completedStep || !state.releaseBranch) {
 			console.warn(
 				pc.yellow(
 					`Invalid ${STATE_FILE} found — ignoring (missing required fields)`

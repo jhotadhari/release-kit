@@ -67,7 +67,12 @@ export function parseArgs(): ParsedArgs {
 		process.exit(1);
 	}
 
-	const opts = program.opts<{ dryRun?: boolean; test?: boolean; lint?: boolean; noPublish?: string | true }>();
+	const opts = program.opts<{
+		dryRun?: boolean;
+		test?: boolean;
+		lint?: boolean;
+		noPublish?: string | true;
+	}>();
 	return {
 		version,
 		dryRun: opts.dryRun === true,
