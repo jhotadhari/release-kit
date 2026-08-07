@@ -34,6 +34,8 @@ There is no build step — the package runs directly via `tsx`. The `bin/release
 
 **Config shape** (`src/types.ts`): Consumers define a `ReleaseConfig` via `defineConfig()` re-exported from the package. Key knobs: `bumpFiles` (JSON or Gradle), `versionCode` (multipliers for Android versionCode computation), `branches` (main/development/release prefix), `publish` (npm and/or GitHub), `preflight` (customizable typecheck/lint/test commands).
 
+**Changelog conventions**: Only standard Keep a Changelog headings (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`) are allowed. Documentation-only changes (README, AGENTS.md, etc.) don't need changelog entries.
+
 **The pipeline** (dry-run exits after step 3):
 1. Parse CLI args
 2. Pre-flight validations
