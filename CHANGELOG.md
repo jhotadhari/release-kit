@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Resume after `merge_main` no longer fails on branch-name check — now validates the correct expected branch per pipeline phase (release → main → development) instead of unconditionally requiring a release branch.
+
 ## [0.0.7] - 2026-08-07
 
 ### Added

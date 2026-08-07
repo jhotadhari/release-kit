@@ -152,7 +152,25 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			pc.yellow('Skipping [Unreleased] check (already released)')
 		);
 	}
-	await checkBranchIsRelease(git, config.branches!.releasePrefix!);
+	if (!done('merge_main')) {
+		await checkBranchIsRelease(git, config.branches!.releasePrefix!);
+	} else if (!done('merge_development')) {
+		const branch = (await git.branch()).current;
+		if (branch !== config.branches!.main!) {
+			fatalError(
+				`Expected branch "${config.branches!.main!}" (already merged to main), got "${branch}"`
+			);
+		}
+		console.log(pc.yellow('Skipping release branch check (on main)'));
+	} else {
+		const branch = (await git.branch()).current;
+		if (branch !== config.branches!.development!) {
+			fatalError(
+				`Expected branch "${config.branches!.development!}" (already merged back), got "${branch}"`
+			);
+		}
+		console.log(pc.yellow('Skipping release branch check (on development)'));
+	}
 	if (shouldPublish('github') && !done('github_release')) {
 		checkGitHubToken();
 	}
