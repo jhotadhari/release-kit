@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
 ## [0.0.7] - 2026-08-07
 
 ### Added
@@ -64,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive documentation
 - Unit test suite
 
+[Unreleased]: https://github.com/jhotadhari/release-kit/compare/v0.0.7...HEAD
 [0.0.7]: https://github.com/jhotadhari/release-kit/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/jhotadhari/release-kit/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/jhotadhari/release-kit/compare/v0.0.3...v0.0.5
