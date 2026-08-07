@@ -2,6 +2,8 @@
 
 Generic release pipeline for libraries and apps — bumps versions, manages changelogs, publishes to npm and GitHub.
 
+> **Note:** release-kit currently publishes to npm and GitHub Releases only. Play Store and F-Droid publishing are on the [roadmap](./ROADMAP.md).
+
 ## Quick start
 
 ```sh
@@ -54,6 +56,10 @@ Run with `--dry-run` to validate without mutating.
 - [Workflow](./docs/workflow.md) — branching model and release process
 - [Version bumping](./docs/version-bumping.md) — JSON, Gradle, and versionCode
 - [CLI reference](./docs/cli.md) — arguments, options, env vars
+
+## Apps/libraries using @jhotadhari/release-kit
+
+Originally created as part of the release pipeline for **[straymap](https://github.com/jhotadhari/straymap)** and its dependencies, this package was later extracted as a standalone, reusable tool.
 
 ## License
 

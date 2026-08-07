@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.7] - 2026-08-07
+
+### Added
+
+- `publish.github` now supports `{ attachment: true }` to auto-attach platform binaries (APK/AAB/IPA) to GitHub Releases.
+- New `docs/app-release-workflow.md` — guide for consuming apps to set up CI that builds and attaches native artifacts on release.
+- README: clarified current scope (npm + GitHub only) and linked `ROADMAP.md`.
+- `ROADMAP.md` — planned store publishing features (metadata scaffolding, changelog extraction, F-Droid, Play Store upload).
+
+### Changed
+
+- Migrated from Claude Code to OpenCode — renamed `CLAUDE.md` to `AGENTS.md` and updated edit tool guidance.
+
 ## [0.0.6] - 2026-07-02
 
 ### Changed
@@ -51,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive documentation
 - Unit test suite
 
+[0.0.7]: https://github.com/jhotadhari/release-kit/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/jhotadhari/release-kit/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/jhotadhari/release-kit/compare/v0.0.3...v0.0.5
 [0.0.3]: https://github.com/jhotadhari/release-kit/compare/v0.0.2...v0.0.3

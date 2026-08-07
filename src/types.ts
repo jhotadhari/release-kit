@@ -26,7 +26,7 @@ export interface ReleaseConfig {
 	};
 	publish?: {
 		npm?: boolean | { buildCommand?: string | false };
-		github?: boolean;
+		github?: boolean | { attachment?: boolean };
 	};
 	versionCode?: VersionCodeConfig;
 	preflight?: {

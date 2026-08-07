@@ -109,9 +109,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			}
 		} else {
 			console.log(
-				pc.blue(
-					`Resuming from step "${existingState.completedStep}"`
-				)
+				pc.blue(`Resuming from step "${existingState.completedStep}"`)
 			);
 		}
 	}
@@ -145,9 +143,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	if (!done('commit')) {
 		await checkCleanWorkingTree(git);
 	} else {
-		console.log(
-			pc.yellow('Skipping clean tree check (already committed)')
-		);
+		console.log(pc.yellow('Skipping clean tree check (already committed)'));
 	}
 	if (config.changelog && !done('changelog')) {
 		checkChangelogHasUnreleased(changelogPath);
@@ -189,9 +185,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			completedStep: step,
 			releaseBranch: stateBranch,
 			noPublish:
-				effectiveNoPublish.length > 0
-					? effectiveNoPublish
-					: undefined,
+				effectiveNoPublish.length > 0 ? effectiveNoPublish : undefined,
 			// Inverse semantics: true means "was skipped" (--no-test / --no-lint)
 			noTest: state?.noTest ?? (args.test ? undefined : true),
 			noLint: state?.noLint ?? (args.lint ? undefined : true),
@@ -228,7 +222,15 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	// 8. GitHub release
 	if (!done('github_release')) {
 		if (shouldPublish('github')) {
-			await createGitHubRelease(version, config.repo, changelogPath);
+			const githubConfig = config.publish?.github;
+			const githubOptions =
+				typeof githubConfig === 'object' ? githubConfig : undefined;
+			await createGitHubRelease(
+				version,
+				config.repo,
+				changelogPath,
+				githubOptions
+			);
 		} else {
 			console.log(pc.yellow('Skipping GitHub release'));
 		}
