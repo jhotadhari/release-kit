@@ -6,6 +6,7 @@ import {
 	validateVersionIsHigher,
 	checkCleanWorkingTree,
 	checkChangelogHasUnreleased,
+	checkChangelogSections,
 	checkBranchIsRelease,
 	checkGitHubToken,
 	checkNpmAuth,
@@ -147,6 +148,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	}
 	if (config.changelog && !done('changelog')) {
 		checkChangelogHasUnreleased(changelogPath);
+		checkChangelogSections(changelogPath);
 	} else if (config.changelog) {
 		console.log(
 			pc.yellow('Skipping [Unreleased] check (already released)')

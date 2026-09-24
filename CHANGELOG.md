@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CHANGELOG section validation** — release-kit now validates that every `###` heading inside the `[Unreleased]` block is a standard Keep a Changelog section (Added, Changed, Deprecated, Removed, Fixed, Security). A non-standard heading (e.g. `### Dependencies`) previously crashed the `keep-a-changelog` serializer with a cryptic `TypeError` mid-release; it now fails the pre-flight with a clear message.
+
 ## [0.0.8] - 2026-08-07
 
 ### Fixed

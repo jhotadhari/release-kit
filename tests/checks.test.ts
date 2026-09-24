@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkChangelogHasUnreleased } from '../src/checks';
+import { checkChangelogHasUnreleased, checkChangelogSections } from '../src/checks';
 
 let tmpDir: string;
 const originalExit = process.exit;
@@ -79,5 +79,55 @@ describe('checkChangelogHasUnreleased', () => {
 			},
 			{ message: /process.exit/ },
 		);
+	});
+});
+
+describe('checkChangelogSections', () => {
+	before(() => {
+		tmpDir = join(tmpdir(), `release-kit-section-test-${Date.now()}`);
+		mkdirSync(tmpDir);
+		process.exit = mockExit as typeof process.exit;
+	});
+
+	after(() => {
+		rmSync(tmpDir, { recursive: true, force: true });
+		process.exit = originalExit;
+	});
+
+	it('passes for standard sections', () => {
+		const path = createFile(
+			'CHANGELOG.md',
+			'# Changelog\n\n## [Unreleased]\n### Added\n- A\n### Changed\n- B\n### Removed\n- C\n\n## [1.0.0] - 2020-01-01\n### Added\n- old\n',
+		);
+		checkChangelogSections(path);
+	});
+
+	it('passes for an empty [Unreleased] section', () => {
+		const path = createFile(
+			'CHANGELOG.md',
+			'# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2020-01-01\n',
+		);
+		checkChangelogSections(path);
+	});
+
+	it('throws for an unknown section', () => {
+		const path = createFile(
+			'CHANGELOG.md',
+			'# Changelog\n\n## [Unreleased]\n### Dependencies\n- foo\n',
+		);
+		assert.throws(
+			() => {
+				checkChangelogSections(path);
+			},
+			{ message: /process.exit/ },
+		);
+	});
+
+	it('ignores unknown sections outside [Unreleased]', () => {
+		const path = createFile(
+			'CHANGELOG.md',
+			'# Changelog\n\n## [Unreleased]\n### Added\n- A\n\n## [1.0.0] - 2020-01-01\n### Dependencies\n- old\n',
+		);
+		checkChangelogSections(path);
 	});
 });

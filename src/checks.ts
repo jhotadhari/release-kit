@@ -73,6 +73,54 @@ export function checkChangelogHasUnreleased(changelogPath: string): void {
 	}
 }
 
+const KNOWN_CHANGELOG_SECTIONS = [
+	'Added',
+	'Changed',
+	'Deprecated',
+	'Removed',
+	'Fixed',
+	'Security',
+] as const;
+
+/**
+ * Validates that every `### <Section>` heading inside the `[Unreleased]` block
+ * is a standard Keep a Changelog section. A non-standard heading (e.g.
+ * `### Dependencies`) would otherwise crash the keep-a-changelog serializer
+ * later (a cryptic "reading '0'" TypeError) — fail fast here with a clear
+ * message instead.
+ */
+export function checkChangelogSections(changelogPath: string): void {
+	const content = readFileSync(changelogPath, 'utf-8');
+
+	const unreleasedIdx = content.search(/## \[?Unreleased\]?/i);
+	if (unreleasedIdx === -1) {
+		// No [Unreleased] section — handled by checkChangelogHasUnreleased.
+		return;
+	}
+
+	const after = content.slice(unreleasedIdx);
+	const nextVersionIdx = after.search(/\n## \[[0-9]/);
+	const body = nextVersionIdx === -1 ? after : after.slice(0, nextVersionIdx);
+
+	const unknown: string[] = [];
+	for (const match of body.matchAll(/^### (.+)$/gm)) {
+		const heading = (match[1] ?? '').trim();
+		if (!(KNOWN_CHANGELOG_SECTIONS as readonly string[]).includes(heading)) {
+			unknown.push(heading);
+		}
+	}
+
+	if (unknown.length > 0) {
+		fatalError(
+			'CHANGELOG.md [Unreleased] has unknown section(s): ' +
+				unknown.map((h) => `"${h}"`).join(', ') +
+				'. Allowed: ' +
+				KNOWN_CHANGELOG_SECTIONS.join(', ') +
+				'.'
+		);
+	}
+}
+
 export async function checkBranchIsRelease(
 	git: SimpleGit,
 	releasePrefix: string
