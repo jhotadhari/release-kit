@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.9] - 2026-09-24
+
+### Fixed
+
+- **CHANGELOG section validation** — release-kit now validates that every `###` heading inside the `[Unreleased]` block is a standard Keep a Changelog section (Added, Changed, Deprecated, Removed, Fixed, Security). A non-standard heading (e.g. `### Dependencies`) previously crashed the `keep-a-changelog` serializer with a cryptic `TypeError` mid-release; it now fails the pre-flight with a clear message.
+
 ## [0.0.8] - 2026-08-07
 
 ### Fixed
@@ -70,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive documentation
 - Unit test suite
 
+[0.0.9]: https://github.com/jhotadhari/release-kit/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/jhotadhari/release-kit/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/jhotadhari/release-kit/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/jhotadhari/release-kit/compare/v0.0.5...v0.0.6
