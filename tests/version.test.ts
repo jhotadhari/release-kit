@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { getNpmTag, getVersionCode } from '../src/version';
+import { getGitHubReleaseFlags, getNpmTag, getVersionCode } from '../src/version';
 import type { VersionCodeConfig } from '../src/types';
 
 describe('getNpmTag', () => {
@@ -17,6 +17,41 @@ describe('getNpmTag', () => {
 
 	it('returns the prerelease label for dot-separated prereleases', () => {
 		assert.equal(getNpmTag('1.0.0-alpha.1.0'), 'alpha');
+	});
+});
+
+describe('getGitHubReleaseFlags', () => {
+	it('flags prerelease versions as prerelease and not latest', () => {
+		assert.deepEqual(getGitHubReleaseFlags('1.0.0-alpha.1'), {
+			prerelease: true,
+			make_latest: 'false',
+		});
+		assert.deepEqual(getGitHubReleaseFlags('5.0.0-beta.1'), {
+			prerelease: true,
+			make_latest: 'false',
+		});
+		assert.deepEqual(getGitHubReleaseFlags('1.0.0-rc.2'), {
+			prerelease: true,
+			make_latest: 'false',
+		});
+	});
+
+	it('flags release versions as not prerelease and latest', () => {
+		assert.deepEqual(getGitHubReleaseFlags('0.4.0'), {
+			prerelease: false,
+			make_latest: 'true',
+		});
+		assert.deepEqual(getGitHubReleaseFlags('5.0.0'), {
+			prerelease: false,
+			make_latest: 'true',
+		});
+	});
+
+	it('treats invalid versions as releases', () => {
+		assert.deepEqual(getGitHubReleaseFlags('not-a-version'), {
+			prerelease: false,
+			make_latest: 'true',
+		});
 	});
 });
 

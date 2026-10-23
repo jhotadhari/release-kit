@@ -11,6 +11,23 @@ export function getNpmTag(version: string): string | undefined {
 	return parsed.prerelease[0] as string;
 }
 
+export type GitHubReleaseFlags = {
+	prerelease: boolean;
+	make_latest: 'true' | 'false';
+};
+
+/**
+ * GitHub-release flags derived from the version: pre-releases (alpha/beta/
+ * rc/…) are marked as prereleases and never become the "Latest" release.
+ */
+export function getGitHubReleaseFlags(version: string): GitHubReleaseFlags {
+	const isPrerelease = (semver.parse(version)?.prerelease.length ?? 0) > 0;
+	return {
+		prerelease: isPrerelease,
+		make_latest: isPrerelease ? 'false' : 'true',
+	};
+}
+
 export function getCurrentVersion(pkgPath: string): string {
 	const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
 	return pkg.version as string;

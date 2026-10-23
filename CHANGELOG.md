@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- GitHub releases for pre-release versions (alpha/beta/rc) are now marked
+  as pre-releases and never become the "Latest" release — the GitHub step
+  previously never set the `prerelease` flag, so betas were published as
+  regular releases and stole the Latest badge from stable versions.
+
 ## [0.0.9] - 2026-09-24
 
 ### Fixed

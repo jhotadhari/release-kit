@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { Octokit } from '@octokit/rest';
 import { fatalError } from './checks';
 import { extractReleaseBody } from './changelog';
+import { getGitHubReleaseFlags } from './version';
 
 interface GitHubPublishOptions {
 	attachment?: boolean;
@@ -205,6 +206,7 @@ export async function createGitHubRelease(
 			name: tagName,
 			body,
 			draft: false,
+			...getGitHubReleaseFlags(version),
 		});
 		releaseId = existingRelease.id;
 		console.log(pc.green('Updated GitHub release: ' + tagName));
@@ -216,6 +218,7 @@ export async function createGitHubRelease(
 			name: tagName,
 			body,
 			draft: false,
+			...getGitHubReleaseFlags(version),
 		});
 		releaseId = data.id;
 		console.log(pc.green('Created GitHub release: ' + tagName));
