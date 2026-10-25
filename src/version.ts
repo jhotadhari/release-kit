@@ -3,7 +3,7 @@ import path from 'path';
 import pc from 'picocolors';
 import semver from 'semver';
 import type { ReleaseConfig, VersionCodeConfig } from './types';
-import { fatalError } from './checks';
+import { fatalError } from './errors';
 
 export function getNpmTag(version: string): string | undefined {
 	const parsed = semver.parse(version);
@@ -28,9 +28,25 @@ export function getGitHubReleaseFlags(version: string): GitHubReleaseFlags {
 	};
 }
 
-export function getCurrentVersion(pkgPath: string): string {
-	const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-	return pkg.version as string;
+/**
+ * Reads the current version from a bump file. JSON files expose it under the
+ * `version` key; Gradle files expose it via `versionName`. Gradle-only
+ * projects (no package.json) are supported — the version source of truth
+ * lives in the gradle file.
+ */
+export function getCurrentVersionFromFile(filePath: string): string {
+	const content = readFileSync(filePath, 'utf-8');
+
+	if (filePath.endsWith('.json')) {
+		const pkg = JSON.parse(content);
+		return pkg.version as string;
+	}
+
+	const match = content.match(/versionName\s+["']([^"']+)["']/);
+	if (!match) {
+		fatalError(`Could not find versionName in ${path.basename(filePath)}`);
+	}
+	return match[1]!;
 }
 
 function escapeRegex(str: string): string {

@@ -36,8 +36,22 @@ versionCode: {
 },
 ```
 
-### How versionCode is computed
+### Gradle-only projects (no package.json)
 
+release-kit supports pure-native Android projects without a `package.json`.
+The current version is read from `versionName` in the first configured bump
+file, so the gradle file is the single source of truth:
+
+```ts
+bumpFiles: [
+    { path: 'app/build.gradle', type: 'gradle' },
+],
+```
+
+If `bumpFiles` contains a `package.json`, it takes precedence as the
+current-version source.
+
+### How versionCode is computed
 The versionCode encodes the full semantic version into a single integer:
 
 ```

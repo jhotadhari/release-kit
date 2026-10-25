@@ -1,6 +1,9 @@
-import { describe, it } from 'node:test';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { getGitHubReleaseFlags, getNpmTag, getVersionCode } from '../src/version';
+import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { getGitHubReleaseFlags, getNpmTag, getVersionCode, getCurrentVersionFromFile } from '../src/version';
 import type { VersionCodeConfig } from '../src/types';
 
 describe('getNpmTag', () => {
@@ -126,5 +129,74 @@ describe('getVersionCode', () => {
 		assert.ok(alpha1 < beta1, 'alpha < beta');
 		assert.ok(beta1 < rc1, 'beta < rc');
 		assert.ok(rc1 < release, 'rc < release');
+	});
+});
+
+describe('getCurrentVersionFromFile', () => {
+	let tmpDir: string;
+	const originalExit = process.exit;
+	const originalError = console.error;
+
+	before(() => {
+		tmpDir = join(tmpdir(), `release-kit-version-test-${Date.now()}`);
+		mkdirSync(tmpDir);
+		process.exit = ((code?: number) => {
+			throw new Error(`process.exit(${code})`);
+		}) as typeof process.exit;
+		console.error = () => {};
+	});
+
+	after(() => {
+		rmSync(tmpDir, { recursive: true, force: true });
+		process.exit = originalExit;
+		console.error = originalError;
+	});
+
+	function createFile(name: string, content: string): string {
+		const path = join(tmpDir, name);
+		writeFileSync(path, content, 'utf-8');
+		return path;
+	}
+
+	it('reads the version from a JSON file', () => {
+		const path = createFile(
+			'package.json',
+			'{"name": "x", "version": "1.2.3"}\n'
+		);
+		assert.equal(getCurrentVersionFromFile(path), '1.2.3');
+	});
+
+	it('reads versionName from a gradle file (double quotes)', () => {
+		const path = createFile(
+			'build.gradle',
+			'android {\n    defaultConfig {\n        versionName "0.9.1"\n        versionCode 91\n    }\n}\n'
+		);
+		assert.equal(getCurrentVersionFromFile(path), '0.9.1');
+	});
+
+	it('reads versionName from a gradle file (single quotes)', () => {
+		const path = createFile(
+			'build.gradle',
+			"android {\n    defaultConfig {\n        versionName '0.9.1'\n    }\n}\n"
+		);
+		assert.equal(getCurrentVersionFromFile(path), '0.9.1');
+	});
+
+	it('reads a prerelease versionName from a gradle file', () => {
+		const path = createFile(
+			'build.gradle',
+			'versionName "1.0.0-beta.1"\n'
+		);
+		assert.equal(getCurrentVersionFromFile(path), '1.0.0-beta.1');
+	});
+
+	it('throws when no versionName exists in a gradle file', () => {
+		const path = createFile('build.gradle', 'android {\n}\n');
+		assert.throws(
+			() => {
+				getCurrentVersionFromFile(path);
+			},
+			{ message: /process.exit/ }
+		);
 	});
 });

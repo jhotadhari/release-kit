@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.11] - 2026-10-25
+
+### Added
+
+- Gradle-only projects are now supported: when no `package.json` is
+  configured in `bumpFiles`, the current version is read from
+  `versionName` in the first bump file (JSON files still expose it via
+  the `version` key). Single-quoted `versionName` values are accepted.
+
+### Fixed
+
+- `preflight.typecheck: false` is now honored — it previously still ran
+  the default `yarn typecheck` command (lint and test already respected
+  `false`).
+
 ## [0.0.10] - 2026-10-25
 
 ### Added
@@ -92,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive documentation
 - Unit test suite
 
+[0.0.11]: https://github.com/jhotadhari/release-kit/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/jhotadhari/release-kit/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/jhotadhari/release-kit/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/jhotadhari/release-kit/compare/v0.0.7...v0.0.8
