@@ -14,7 +14,7 @@ import {
 	runPreflights,
 	fatalError,
 } from './checks';
-import { getCurrentVersion, bumpAllFiles } from './version';
+import { getCurrentVersionFromFile, bumpAllFiles } from './version';
 import { releaseChangelog, addUnreleasedSection } from './changelog';
 import {
 	createGit,
@@ -66,7 +66,9 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 			'No bumpFiles configured. At least one file (e.g. package.json) is required.'
 		);
 	}
-	const pkgPath =
+	// The version source of truth: package.json when present, otherwise the
+	// first bump file (e.g. a gradle file in Android-only projects).
+	const versionFilePath =
 		pkgs.find((bf) => bf.path.endsWith('package.json'))?.path ??
 		pkgs[0]!.path;
 	const changelogPath = config.changelog?.path;
@@ -139,7 +141,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 	if (!done('bump')) {
 		const currentVersion = await validateVersionIsHigher(
 			version,
-			pkgPath,
+			versionFilePath,
 			git
 		);
 		validateNoSkippedVersions(currentVersion, version);
@@ -177,7 +179,9 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 				`Expected branch "${config.branches!.development!}" (already merged back), got "${branch}"`
 			);
 		}
-		console.log(pc.yellow('Skipping release branch check (on development)'));
+		console.log(
+			pc.yellow('Skipping release branch check (on development)')
+		);
 	}
 	if (shouldPublish('github') && !done('github_release')) {
 		checkGitHubToken();
@@ -219,7 +223,7 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 
 	// 4. Bump version in all configured files
 	if (!done('bump')) {
-		const currentVersion = getCurrentVersion(pkgPath);
+		const currentVersion = getCurrentVersionFromFile(versionFilePath);
 		bumpAllFiles(config, currentVersion, version);
 		save('bump');
 	}

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Gradle-only projects are now supported: when no `package.json` is
+  configured in `bumpFiles`, the current version is read from
+  `versionName` in the first bump file (JSON files still expose it via
+  the `version` key). Single-quoted `versionName` values are accepted.
+
+### Fixed
+
+- `preflight.typecheck: false` is now honored — it previously still ran
+  the default `yarn typecheck` command (lint and test already respected
+  `false`).
+
 ## [0.0.10] - 2026-10-25
 
 ### Added

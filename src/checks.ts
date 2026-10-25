@@ -4,24 +4,18 @@ import pc from 'picocolors';
 import semver from 'semver';
 import type { SimpleGit } from 'simple-git';
 import type { ReleaseConfig } from './types';
+import { getCurrentVersionFromFile } from './version';
+import { fatalError } from './errors';
 
-export function fatalError(message: string): never {
-	console.error(pc.red('ERROR'), message);
-	process.exit(1);
-}
-
-function getCurrentVersion(pkgPath: string): string {
-	const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-	return pkg.version as string;
-}
+export { fatalError };
 
 export async function validateVersionIsHigher(
 	newVersion: string,
-	pkgPath: string,
+	versionFilePath: string,
 	git: SimpleGit
 ): Promise<string> {
 	await git.fetch(['--tags']);
-	const currentVersion = getCurrentVersion(pkgPath);
+	const currentVersion = getCurrentVersionFromFile(versionFilePath);
 
 	if (semver.lte(newVersion, currentVersion)) {
 		fatalError(
@@ -128,7 +122,9 @@ export function checkNpmAuth(): void {
 export function checkChangelogHasUnreleased(changelogPath: string): void {
 	const content = readFileSync(changelogPath, 'utf-8');
 	if (!/## \[?Unreleased\]?/i.test(content)) {
-		fatalError('CHANGELOG.md should have an `[Unreleased]` or `Unreleased` section');
+		fatalError(
+			'CHANGELOG.md should have an `[Unreleased]` or `Unreleased` section'
+		);
 	}
 }
 
@@ -164,7 +160,9 @@ export function checkChangelogSections(changelogPath: string): void {
 	const unknown: string[] = [];
 	for (const match of body.matchAll(/^### (.+)$/gm)) {
 		const heading = (match[1] ?? '').trim();
-		if (!(KNOWN_CHANGELOG_SECTIONS as readonly string[]).includes(heading)) {
+		if (
+			!(KNOWN_CHANGELOG_SECTIONS as readonly string[]).includes(heading)
+		) {
 			unknown.push(heading);
 		}
 	}
@@ -206,12 +204,16 @@ export function runPreflights(
 	root: string,
 	opts: { test: boolean; lint: boolean }
 ): void {
-	// Always run typecheck
-	runCommand(
-		'Typecheck',
-		config.preflight?.typecheck || 'yarn typecheck',
-		root
-	);
+	// Always run typecheck, unless explicitly disabled
+	if (config.preflight?.typecheck === false) {
+		console.log(pc.yellow('Skipping typecheck (disabled)'));
+	} else {
+		runCommand(
+			'Typecheck',
+			config.preflight?.typecheck || 'yarn typecheck',
+			root
+		);
+	}
 
 	if (config.preflight?.lint !== false && opts.lint) {
 		runCommand('Lint', config.preflight?.lint || 'yarn lint', root);
