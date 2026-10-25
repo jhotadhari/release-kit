@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkChangelogHasUnreleased, checkChangelogSections } from '../src/checks';
+import { checkChangelogHasUnreleased, checkChangelogSections, validateNoSkippedVersions } from '../src/checks';
 
 let tmpDir: string;
 const originalExit = process.exit;
@@ -129,5 +129,93 @@ describe('checkChangelogSections', () => {
 			'# Changelog\n\n## [Unreleased]\n### Added\n- A\n\n## [1.0.0] - 2020-01-01\n### Dependencies\n- old\n',
 		);
 		checkChangelogSections(path);
+	});
+});
+
+describe('validateNoSkippedVersions', () => {
+	before(() => {
+		process.exit = mockExit as typeof process.exit;
+	});
+
+	after(() => {
+		process.exit = originalExit;
+	});
+
+	it('allows a patch bump', () => {
+		validateNoSkippedVersions('0.4.0', '0.4.1');
+	});
+
+	it('allows a minor bump', () => {
+		validateNoSkippedVersions('0.4.0', '0.5.0');
+	});
+
+	it('allows a major bump', () => {
+		validateNoSkippedVersions('0.4.0', '1.0.0');
+	});
+
+	it('allows a pre-release of a minor bump', () => {
+		validateNoSkippedVersions('0.4.0', '0.5.0-beta.1');
+	});
+
+	it('allows a pre-release of a major bump', () => {
+		validateNoSkippedVersions('0.4.0', '1.0.0-alpha.1');
+	});
+
+	it('allows pre-release steps within the same core version', () => {
+		validateNoSkippedVersions('0.5.0-beta.1', '0.5.0-beta.2');
+		validateNoSkippedVersions('0.5.0-beta.2', '0.5.0-rc.1');
+	});
+
+	it('allows promoting a pre-release to stable', () => {
+		validateNoSkippedVersions('0.5.0-rc.1', '0.5.0');
+	});
+
+	it('allows a patch bump from a pre-release core', () => {
+		validateNoSkippedVersions('0.5.0-beta.1', '0.5.1');
+	});
+
+	it('rejects a multi-major jump (0.4.0 → 5.0.0-beta.1)', () => {
+		assert.throws(
+			() => {
+				validateNoSkippedVersions('0.4.0', '5.0.0-beta.1');
+			},
+			{ message: /process.exit/ },
+		);
+	});
+
+	it('rejects a skipped patch (0.4.0 → 0.4.2)', () => {
+		assert.throws(
+			() => {
+				validateNoSkippedVersions('0.4.0', '0.4.2');
+			},
+			{ message: /process.exit/ },
+		);
+	});
+
+	it('rejects a skipped minor (0.4.0 → 0.6.0)', () => {
+		assert.throws(
+			() => {
+				validateNoSkippedVersions('0.4.0', '0.6.0');
+			},
+			{ message: /process.exit/ },
+		);
+	});
+
+	it('rejects a multi-major jump (1.0.0 → 3.0.0)', () => {
+		assert.throws(
+			() => {
+				validateNoSkippedVersions('1.0.0', '3.0.0');
+			},
+			{ message: /process.exit/ },
+		);
+	});
+
+	it('rejects reusing a released stable core', () => {
+		assert.throws(
+			() => {
+				validateNoSkippedVersions('0.5.0', '0.5.0');
+			},
+			{ message: /process.exit/ },
+		);
 	});
 });

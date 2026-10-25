@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.10] - 2026-10-25
+
+### Added
+
+- Release versions are now validated to increase step by step: the new
+  version must be a single patch/minor/major step from the current one,
+  or a pre-release of such a step (e.g. `0.4.0` → `0.5.0-beta.1`). Typos
+  like `0.4.0` → `5.0.0-beta.1` now fail early instead of publishing.
+
+### Fixed
+
+- GitHub releases for pre-release versions (alpha/beta/rc) are now marked
+  as pre-releases and never become the "Latest" release — the GitHub step
+  previously never set the `prerelease` flag, so betas were published as
+  regular releases and stole the Latest badge from stable versions.
+
 ## [0.0.9] - 2026-09-24
 
 ### Fixed
@@ -76,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Comprehensive documentation
 - Unit test suite
 
+[0.0.10]: https://github.com/jhotadhari/release-kit/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/jhotadhari/release-kit/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/jhotadhari/release-kit/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/jhotadhari/release-kit/compare/v0.0.6...v0.0.7
