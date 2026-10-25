@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Release versions are now validated to increase step by step: the new
+  version must be a single patch/minor/major step from the current one,
+  or a pre-release of such a step (e.g. `0.4.0` → `0.5.0-beta.1`). Typos
+  like `0.4.0` → `5.0.0-beta.1` now fail early instead of publishing.
+
 ### Fixed
 
 - GitHub releases for pre-release versions (alpha/beta/rc) are now marked

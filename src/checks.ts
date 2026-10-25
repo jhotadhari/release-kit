@@ -19,13 +19,72 @@ export async function validateVersionIsHigher(
 	newVersion: string,
 	pkgPath: string,
 	git: SimpleGit
-): Promise<void> {
+): Promise<string> {
 	await git.fetch(['--tags']);
 	const currentVersion = getCurrentVersion(pkgPath);
 
 	if (semver.lte(newVersion, currentVersion)) {
 		fatalError(
 			`New version (${newVersion}) must be higher than current version (${currentVersion})`
+		);
+	}
+
+	return currentVersion;
+}
+
+/**
+ * Rejects version jumps that skip steps: the next version must be a single
+ * patch/minor/major increment from the current one (e.g. 0.4.0 → 0.4.1 /
+ * 0.5.0 / 1.0.0), a pre-release of such an increment (0.4.0 →
+ * 0.5.0-beta.1), or a pre-release step within the same core version
+ * (0.5.0-beta.1 → 0.5.0-beta.2 → 0.5.0-rc.1 → 0.5.0).
+ */
+export function validateNoSkippedVersions(
+	currentVersion: string,
+	newVersion: string
+): void {
+	const current = semver.parse(currentVersion);
+	const next = semver.parse(newVersion);
+	if (!current || !next) {
+		fatalError(
+			`Could not parse versions: ${currentVersion} → ${newVersion}`
+		);
+	}
+
+	const sameCore =
+		next.major === current.major &&
+		next.minor === current.minor &&
+		next.patch === current.patch;
+	if (sameCore) {
+		if (current.prerelease.length === 0) {
+			fatalError(
+				`New version (${newVersion}) reuses the released core version ${currentVersion} — versions must increase step by step.`
+			);
+		}
+		// Pre-release step within the same core (beta.1 → beta.2 → rc.1 →
+		// stable). The higher/equal check already rejects regressions.
+		return;
+	}
+
+	const patchBump =
+		next.major === current.major &&
+		next.minor === current.minor &&
+		next.patch === current.patch + 1;
+	const minorBump =
+		next.major === current.major &&
+		next.minor === current.minor + 1 &&
+		next.patch === 0;
+	const majorBump =
+		next.major === current.major + 1 &&
+		next.minor === 0 &&
+		next.patch === 0;
+
+	if (!patchBump && !minorBump && !majorBump) {
+		fatalError(
+			`New version (${newVersion}) skips versions — versions must increase step by step from ${currentVersion}. ` +
+				`Allowed next versions: ${current.major}.${current.minor}.${current.patch + 1}, ` +
+				`${current.major}.${current.minor + 1}.0, ${current.major + 1}.0.0, ` +
+				`or pre-releases of these.`
 		);
 	}
 }

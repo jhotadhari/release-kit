@@ -4,6 +4,7 @@ import { parseArgs } from './cli';
 import { resolveConfig } from './config';
 import {
 	validateVersionIsHigher,
+	validateNoSkippedVersions,
 	checkCleanWorkingTree,
 	checkChangelogHasUnreleased,
 	checkChangelogSections,
@@ -136,7 +137,12 @@ export const release = async (userConfig: ReleaseConfig): Promise<void> => {
 
 	// 2. Pre-flight validations (some skipped on resume)
 	if (!done('bump')) {
-		await validateVersionIsHigher(version, pkgPath, git);
+		const currentVersion = await validateVersionIsHigher(
+			version,
+			pkgPath,
+			git
+		);
+		validateNoSkippedVersions(currentVersion, version);
 	} else {
 		console.log(pc.yellow('Skipping version check (already bumped)'));
 	}
